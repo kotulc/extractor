@@ -54,6 +54,6 @@ function [solution sample_data] = extractor_encode(...
 		sample_data.target_mask = extractor_normalize(...
 				error_data.target_layer, 1);
 	end
-	keyboard();
+	
 end
 

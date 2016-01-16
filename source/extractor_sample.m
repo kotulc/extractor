@@ -16,15 +16,6 @@ function [solution fmap_collection] = extractor_sample(...
 	global PARAMS;
 	
 	solution = [];
-	
-	% The alpha mask modifies the influence each instance has on the opt. cost
-	% to shape the properties of each successive feature map
-	null_instances = size(sample_data.null_data, 1);
-    target_instances = size(sample_data.target_data, 1);
-	
-	% Add the alpha mask to each data set
-    sample_data.null_mask = ones(null_instances, 1);
-    sample_data.target_mask = ones(target_instances, 1);
     
 	% If fmap_collection is not empty, update the metrics and activations
 	% with those from this local sample space

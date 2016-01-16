@@ -6,3 +6,8 @@ The Extractor project has been developed as a platform for exploration of superv
 In order to determing the efficacy of the employed encoding, the output of this project (a ANN layer) may be directly compared to the performance of a traditionally trained layer of similar size against a benchmark data set such as MNIST. For this functionality see the EvalNets project at https://github.com/kotulc/evalnets
 
 For more detail concerning this project, please take a look at the documentation.
+
+Pending updates:
+- Remove fmap from collection after adding it to the solution in extractor_encode, move fmap update outside of this function.
+- Update extractor_encode to display relevant information.
+- Improve performance of encode function

@@ -33,6 +33,11 @@ function extractor_main()
 	% Split the data into two classes, target and null (all remaining) class
 	train_data.null_data = image_data(image_labels!=PARAMS.target_label, :);
 	train_data.target_data = image_data(image_labels==PARAMS.target_label, :);
+	% The alpha mask modifies the influence each instance has on the opt. cost
+	% to shape the properties of each successive feature map. Add the alpha 
+	% mask (one row for each instance)for each data class
+	train_data.null_mask = ones(size(train_data.null_data, 1), 1);
+	train_data.target_mask = ones(size(train_data.target_data, 1), 1);
 	disp("Training data loaded.\n");
 	
 	% Uncomment below to display a subset of the MNIST data
@@ -56,7 +61,7 @@ function extractor_main()
 		[sample_data val_data] = extractor_subset(train_data, PARAMS.sample_n);
 		[solution fmap_collection] = extractor_sample(...
 		        fmap_collection, sample_data);
-		
+	
 		% Evaluate against validation data and Add solution to collector
 		extractor_evaluate({solution}, val_data);
 		solutions{end + 1} = solution;
@@ -74,19 +79,20 @@ function extractor_main()
 				solution_final, fmap_collection, val_data);
 	end
 	% Evaluate the performance of this solution on all train data as well
-	extractor_evaluate({solution_final}, train_data);
-	solutions{end + 1} = solution_final;
+	[error_data train_actvs] = extractor_evaluate({solution_final}, train_data);
 	
 	% Evaluate with the test data set
 	disp("Loading test data...");
 	image_data = loadMNISTImages('t10k-images.idx3-ubyte')';
 	image_labels = loadMNISTLabels('t10k-labels.idx1-ubyte');
 	test_data.null_data = image_data(image_labels!=PARAMS.target_label, :);
-	test_data.target_data = image_data(labels==PARAMS.target_label, :);
+	test_data.target_data = image_data(image_labels==PARAMS.target_label, :);
+	test_data.null_mask = ones(size(test_data.null_data, 1), 1);
+	test_data.target_mask = ones(size(test_data.target_data, 1), 1);
 	disp("Test data loaded.\n");
 	
 	% Check generalization performance
-	extractor_evaluate(solutions, test_data);
+	[error_data test_actvs] = extractor_evaluate({solution_final}, test_data);
 	
 	keyboard();
 	% Provide the option to save the newly generated network data
@@ -97,18 +103,18 @@ function extractor_main()
 	% Save feature maps and activations for later use
 	if strcmp(answer, "y") || strcmp(answer, "Y"),
 		% Format the layer output for tensor flow test script
-		train_features = solution_train.activations;
+		train_features = [train_actvs.null_data; train_actvs.target_data];
 		train_labels = [zeros(size(train_data.null_data, 1), 1);...
-				ones(size(train_data.null_data, 1), 1)];
-		test_features = solution_test.activations;
+				ones(size(train_data.target_data, 1), 1)];
+		test_features = [test_actvs.null_data; test_actvs.target_data];
 		test_labels = [zeros(size(test_data.null_data, 1), 1);...
-				ones(size(test_data.null_data, 1), 1)];
+				ones(size(test_data.target_data, 1), 1)];
 		
 		% Save weights from layer encoding
 		save("-6","fmap_weights.m","solution_final"); 
 		% Save net activations and labels
-		save("-6","features.m","train_features","train_labels",...
-            "test_features","test_labels"); 
+		%save("-6","features.m","train_features","train_labels",...
+        %    "test_features","test_labels"); % Work on this next
 		disp("\nWeights and features saved.\n");
 	else
 		disp("\nWeights and features discarded.\n");

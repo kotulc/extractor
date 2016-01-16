@@ -10,7 +10,7 @@ appropriate to evaluate the accuracy of each.
 Arguments: weight matrix, data struct
 Returns: error struct
 %}
-function [error_data] = extractor_evaluate(solutions, sample_data)
+function [error_data actv_data] = extractor_evaluate(solutions, sample_data)
 	
 	for i=1:numel(solutions)
 		% Calculate the layer (solution) activation values and reset the 
@@ -41,7 +41,7 @@ function [error_data] = extractor_evaluate(solutions, sample_data)
 		target_actvs = extractor_fprop(...
 				{input_node.weights}, sample_data.target_data).^2;
 		
-		% Create a structure to encapsulate and return this data		
+		% Create a structure to encapsulate and the error data	
 		error_data.null_input = null_actvs;
 		error_data.target_input =  1 .- target_actvs;
 		
@@ -57,6 +57,10 @@ function [error_data] = extractor_evaluate(solutions, sample_data)
 		
 		error_data.null_layer = null_actvs;
 		error_data.target_layer = 1 .- target_actvs;
+		
+		% Return the activations for the encoded layer
+		actv_data.null_data = null_actvs;
+		actv_data.target_data = target_actvs;
 		
 		% Display layer error information
 		null_layer_esum = sum(null_actvs)

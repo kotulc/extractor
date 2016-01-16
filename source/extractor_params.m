@@ -27,7 +27,7 @@ See extractor_main
 %}
 # name: solution_n
 # type: scalar
-5
+2
 
 
 %{ 
