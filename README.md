@@ -7,7 +7,10 @@ The Extractor project has been developed as a platform for exploration of superv
 
 In order to determing the efficacy of the employed encoding, the output of this project (a ANN layer) may be directly compared to the performance of a traditionally trained layer of similar size against a benchmark data set such as MNIST. For this functionality see the EvalNets project at https://github.com/kotulc/evalnets
 
-For more detail concerning this project, please take a look at the documentation.
+This project has been designed iteratively based on my current understanding of the related concepts. If you are interested in this project or would like to contribute please feel free to fork it. I will review well commented and relevant pull requests.
+
+For more detail concerning this project, please take a look at the documentation located in this repository.
+
 
 Pending updates: pending updates will be included in V1.1.
 - Remove several unnecessary iterative steps, returning only a single solution for now
@@ -19,4 +22,4 @@ Priority updates:
 - Update documentation to reflect above structural changes
 - Continue to simplify structure until performance issues are resolved. 
 
-The current version is under performing when compared to previous versions, (before initial project commit) though previous iterations were much slower as they evaluated feature bias through node generation. The above changes will hopefully eliminate unnecessary complexty and improve the performance of the encoded layer.
+Note: The current version is under performing when compared to previous versions, (before initial project commit) though previous iterations were much slower as they evaluated feature bias through node generation. The above changes will hopefully eliminate unnecessary complexty and improve the performance of the encoded layer.
