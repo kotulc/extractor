@@ -10,17 +10,21 @@ mask vector, generate a new tile mask that is patterned from the instance mask.
 Arguments: instance matrix, mask vector (optional)
 Returns: tile matrix, mask vector (empty if no mask is given)
 %}
-function [tiles tile_mask] = extractor_decompose(instances, instance_mask=[])
+function [tiles tile_pmask tile_smask] = extractor_decompose(...
+		instances, primary_mask=[], secondary_mask=[])
 	
 	global PARAMS;
 	
 	feature_dim = PARAMS.feature_dim;
 	receptive_dim = PARAMS.receptive_dim;
 	
-	disp("Decomposing instances to tiles...");
+	if (PARAMS.db_display)
+		disp("Decomposing instances to tiles...");
+	end
 	
 	tiles = [];
-	tile_mask = [];
+	tile_pmask = [];
+	tile_smask = [];
 	
 	if (numel(instances)==0)
 		disp("No instances to decompose.")
@@ -80,7 +84,8 @@ function [tiles tile_mask] = extractor_decompose(instances, instance_mask=[])
 					tile_idx_batch(i,1):tile_idx_batch(i,2))];
 			
 			% Print iteration progress information 
-			if ( floor( i*100/size(tile_idx_batch,1) ) > progress )
+			if (floor( i*100/size(tile_idx_batch,1) )>progress &&...
+					PARAMS.db_display)
 				progress = floor( i*100/size(tile_idx_batch,1) );
 				fprintf("Extracted %d tiles, %d%% | Batch: %d\r",...
 						i*size(instances,1), progress, j+1);
@@ -98,15 +103,21 @@ function [tiles tile_mask] = extractor_decompose(instances, instance_mask=[])
 	
 	end
 	
-	fprintf("Extracted %d tiles, 100%% | Batch: %d      \n", final_matx_n, j+1);
-	
-	if numel(instance_mask)>0
+	if numel(primary_mask)>0
 		% Expand the instance_mask vector to match each extracted tile
-		tile_mask = repmat(instance_mask, size(tile_indices,1), 1);
+		tile_pmask = repmat(primary_mask, size(tile_indices,1), 1);
     end
 	
-	disp("Decompose operation complete.\n");
-    fflush(stdout);
+	if numel(secondary_mask)>0
+		% Expand the instance_mask vector to match each extracted tile
+		tile_smask = repmat(secondary_mask, size(tile_indices,1), 1);
+    end
+	
+	if (PARAMS.db_display)
+		fprintf("Extracted %d tiles, 100%% | Batch: %d      \n", final_matx_n, j+1);
+		disp("Decompose operation complete.\n");
+		fflush(stdout);
+	end
 	
 end
 

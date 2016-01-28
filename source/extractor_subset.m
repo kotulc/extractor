@@ -29,12 +29,14 @@ function [subset_data diff_data] = extractor_subset(data_set, subset_n=0)
 	% Assign remaining elements of null_perm to diff_data
 	diff_data.null_data = null_perm(subset_n+1:end, :);
   
-	if isfield(data_set, "null_mask") 
-		% The data set has a mask, assign and partition accordingly
-		null_perm = data_set.null_mask(idx, :);
-		subset_data.null_mask = null_perm(1:subset_n, :);
-		diff_data.null_mask = null_perm(subset_n+1:end, :);
-        % Update the new masks to sum to zero?
+	% Assume if the data_set contains null_imask it also has null_emask
+	if isfield(data_set, "null_imask")
+		% The data set has inhibitory and excitatory masks, assign and 
+		% partition each accordingly
+		null_perm = data_set.null_imask(idx, :);
+		subset_data.null_imask = null_perm(1:subset_n, :);
+		null_perm = data_set.null_emask(idx, :);
+		subset_data.null_emask = null_perm(1:subset_n, :);
 	end
 
 	
@@ -46,10 +48,11 @@ function [subset_data diff_data] = extractor_subset(data_set, subset_n=0)
 	subset_data.target_data = target_perm(1:subset_n, :);
 	diff_data.target_data = target_perm(subset_n+1:end, :);
 	
-	if isfield(data_set, "target_mask") 
-		target_perm = data_set.target_mask(idx, :);
-		subset_data.target_mask = target_perm(1:subset_n, :);
-		diff_data.target_mask = target_perm(subset_n+1:end, :);
+	if isfield(data_set, "target_imask") 
+		target_perm = data_set.target_imask(idx, :);
+		subset_data.target_imask = target_perm(1:subset_n, :);
+		target_perm = data_set.target_emask(idx, :);
+		subset_data.target_emask = target_perm(1:subset_n, :);
 	end
 	
 end

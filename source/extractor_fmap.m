@@ -18,8 +18,10 @@ function weights = extractor_fmap(weight_template)
 	receptive_dim = PARAMS.receptive_dim;
 	weights = [];
 	
-	disp("\nGenerating feature map weights...");
-
+	if (PARAMS.db_display)
+		disp("\nGenerating feature map weights...");
+	end
+	
 	% The length of the template_mask should be equal to the number of all 
 	% contiguous row-wise elements between the first and the last member of a
 	% tile extracted from the set matrix
@@ -56,6 +58,8 @@ function weights = extractor_fmap(weight_template)
 	bias = bias .* ones(1,size(weights,2));
 	weights = [bias; weights];
 	
-	disp("Feature map weights generated.\n");
+	if (PARAMS.db_display)
+		disp("Feature map weights generated.\n");
+	end
 	
 end

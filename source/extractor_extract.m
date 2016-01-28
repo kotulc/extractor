@@ -10,91 +10,147 @@ the most fit candidate.
 Arguments: data struct
 Returns: node struct
 %}
-function template_node = extractor_extract(sample_data)
+function [null_feature target_feature] = extractor_extract(sample_data)
 	
 	global PARAMS;
 	
-    % Initialize the template pool collection structure
-	template_pool.instances = [];
-	template_pool.weights = [];
-	template_pool.fitness = [];
-	template_pool.tiles = [];
+    % Initialize the template pool and tile collection structures
+	node_pool.null_nodes.weights = [];
+	node_pool.null_nodes.fitness = [];
+	node_pool.target_nodes.weights = [];
+	node_pool.target_nodes.fitness = [];
 	
-	% Get the list of (target) instances to generate templates from
-	[template_data r_data] = extractor_subset(sample_data, PARAMS.template_n);
+	tiles.null_tiles = [];
+	tiles.target_tiles = [];
 	
-	% Select a single candidate template instance per iteration. NOTE: This is
-	% a batch operation, each iteration may be performed in parallel in future 
-	% implementations of this system
-	for i=1:size(template_data.target_data, 1)
-		% Select a random set of null instance tiles to extract templates from
-		[eval_data r_tiles] = extractor_subset(...
+	% Initialize excitatory and inhibitory sum vectors in sample_data
+	% these objects are used to steer template extraction and hopefully avoid
+	% extracting duplicate features.
+	sample_data.null_iactvsum = sample_data.target_imask;
+	sample_data.null_eactvsum = sample_data.null_emask;
+
+	sample_data.target_iactvsum = sample_data.null_imask;
+	sample_data.target_eactvsum = sample_data.target_emask;
+	
+	
+	% Get the lists of instances to extract template features from
+	template_data = extractor_subset(sample_data, PARAMS.template_n);
+	
+	% Select a single candidate template instance per iteration
+	disp("\nExtracting templates...");
+	for i=1:PARAMS.template_n
+		% Select a random set of evaluation instances to evaluate templates
+		eval_data = extractor_subset(...
 				sample_data, PARAMS.eval_n);
 		
-		% Get a new candidate template and related tile data 
-		[template_node template_tile] = extractor_template(...
+		% Add a new pair of template features to the pool
+		[null_node target_node] = extractor_template(...
+				template_data.null_data(i,:),...
 				template_data.target_data(i,:), eval_data);
 		
-		% Add the newly selected template to the template pool collection
-		template_pool.weights = [template_pool.weights template_node.weights];
-		template_pool.fitness = [template_pool.fitness; template_node.fitness];
-		template_pool.tiles = [template_pool.tiles; template_tile];
+		[sample_data node_pool tiles] = extractor_pool(...
+				sample_data, node_pool, tiles, null_node, target_node);
 	end
+	disp("Extraction complete.\n");
 	
 	
 	% Update the format of sample_data by decomposing the instances into tiles
-	[null_tiles null_mask] = extractor_decompose(...
-			sample_data.null_data, sample_data.null_mask);	
+	[null_tiles null_imask null_emask] = extractor_decompose(...
+			sample_data.null_data, sample_data.null_imask,...
+			sample_data.null_emask);	
 	
-	[target_tiles target_mask] = extractor_decompose(...
-			sample_data.target_data, sample_data.target_mask);	
+	[target_tiles target_imask target_emask] = extractor_decompose(...
+			sample_data.target_data, sample_data.target_imask,...
+			sample_data.null_emask);	
 	
-	% Update sample_data with the instance tiles
-	sample_data.null_data = null_tiles;
-	sample_data.null_mask = null_mask;
-	sample_data.target_data = target_tiles;
-	sample_data.target_mask = target_mask;
+	% Clean up sample data, it is no longer required.
+	clear sample_data;
+	
+	% Create the data structures used to used to reduce the pools
+	null_data.null_data = target_tiles;
+	null_data.null_mask = target_imask;
+	null_data.target_data = null_tiles;
+	null_data.target_mask = null_emask;
+	
+	target_data.null_data = null_tiles;
+	target_data.null_mask = null_imask;
+	target_data.target_data = target_tiles;
+	target_data.target_mask = target_emask;
 	
 	
 	% Select operation
 	% template is the most fit candidate template from the template pool
-	[val template_idx] = max(template_pool.fitness);
-	template_node.weights = template_pool.weights(:, template_idx);
-	template_node.fitness = template_pool.fitness(template_idx);
+	[val template_idx] = max(node_pool.null_nodes.fitness);
+	null_feature.weights = node_pool.null_nodes.weights(:, template_idx);
+	null_feature.fitness = node_pool.null_nodes.fitness(template_idx);
+	
+	[val template_idx] = max(node_pool.target_nodes.fitness);
+	target_feature.weights = node_pool.target_nodes.weights(:, template_idx);
+	target_feature.fitness = node_pool.target_nodes.fitness(template_idx);
 	
 	if (PARAMS.db_display)
-		fprintf("Starting template fitness: %d\n", template_node.fitness);
-		fprintf("Pool fitness values:\n");
-		fprintf("%d\n", template_pool.fitness);
+		fprintf("Starting null and target fitness: %12.6d %d\n",...
+				null_feature.fitness, target_feature.fitness);
+		fprintf("Null and target pool fitness values:\n");
+		fprintf("%12.6d %d\n", node_pool.null_nodes.fitness,...
+				node_pool.target_nodes.fitness);
 		fprintf("\n");
 	end
-
 	
-	disp("\nReducing template pool...");
+	
+	disp("\nReducing template pools...");
 	% Reduction phase
-	while size(template_pool.weights, 2)>1
+	while size(node_pool.null_nodes.weights, 2)>1
 		% Reduce re-calculates the weights of each template and eliminates 
 		% those found in the bottom half of template_pool in terms of fitness,
 		% per pass. Returns reduced template_pool with newly trained templates
-		template_pool = extractor_reduce(template_pool, sample_data);
-        
+		node_pool.null_nodes = extractor_reduce(...
+				node_pool.null_nodes, tiles.null_tiles, null_data);
+
 		% Compare the new set of templates with the current best template and
 		% select the template with the greatest fitness
-		[val template_idx] = max([template_node.fitness...
-				template_pool.fitness]);
+		[val template_idx] = max(...
+				[null_feature.fitness node_pool.null_nodes.fitness]);		
 		if template_idx!=1
-			template_node.weights = template_pool.weights(:, template_idx-1);
-			template_node.fitness = template_pool.fitness(template_idx-1);
+			null_feature.weights =...
+					node_pool.null_nodes.weights(:, template_idx-1);
+			null_feature.fitness =...
+					node_pool.null_nodes.fitness(template_idx-1);
 		end
 		
 		if (PARAMS.db_display)
-			fprintf("Selected template fitness: %d\n", template_node.fitness);
-			fprintf("Reduced pool fitness values:\n");
-			fprintf("%d\n", template_pool.fitness);
+			fprintf("Starting null fitness: %12.6d\n",...
+				null_feature.fitness);
+			fprintf("Reduced null pool fitness values:\n");
+			fprintf("%12.6d\n", node_pool.null_nodes.fitness);
 			fprintf("\n");
 		end
 	end
-	disp("Reduce operations complete.");
+	
+	% Repeat above for target templates
+	while size(node_pool.target_nodes.weights, 2)>1
+		node_pool.target_nodes = extractor_reduce(...
+				node_pool.target_nodes, tiles.target_tiles, target_data);
+	
+		[val template_idx] = max(...
+				[target_feature.fitness node_pool.target_nodes.fitness]);			
+		if template_idx!=1
+			target_feature.weights =...
+					node_pool.target_nodes.weights(:, template_idx-1);
+			target_feature.fitness =...
+					node_pool.target_nodes.fitness(template_idx-1);
+		end
+		
+		if (PARAMS.db_display)
+			fprintf("Starting target fitness: %12.6d\n",...
+				target_feature.fitness);
+			fprintf("Reduced target pool fitness values:\n");
+			fprintf("%12.6d\n", node_pool.target_nodes.fitness);
+			fprintf("\n");
+		end
+	end
+	
+	disp("Reduction complete.\n");
 	
 end
 

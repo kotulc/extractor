@@ -10,7 +10,7 @@ inhibitory instances null_data.
 Arguments: nodes struct, data struct
 Returns: nodes struct
 %}
-function nodes = extractor_reduce(nodes, train_data)
+function nodes = extractor_reduce(nodes, tiles, train_data)
 	
 	global PARAMS;
 	
@@ -23,7 +23,7 @@ function nodes = extractor_reduce(nodes, train_data)
 	node_idx = 1:size(nodes.weights, 2);
 	
 	% Calculate the node activation values
-	actvs = extractor_fprop({nodes.weights}, nodes.tiles);
+	actvs = extractor_fprop({nodes.weights}, tiles);
 	
 	% Determine the per-instance maximum activation distribution among all 
 	% nodes and then generate a map, assigning instances to nodes that maximize
@@ -46,8 +46,8 @@ function nodes = extractor_reduce(nodes, train_data)
 	alpha_mask = [target_mask; null_mask];
 	
 	% Combine the inhibitory and excitatory instance collections for training
-	x = [nodes.tiles; train_data.null_data];
-	y = [ones(size(nodes.tiles, 1), 1);...
+	x = [tiles; train_data.null_data];
+	y = [ones(size(tiles, 1), 1);...
 			zeros(size(train_data.null_data, 1), 1)];
 	
 	% Optimize the remaining nodes using x-entropy loss 

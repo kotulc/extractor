@@ -11,7 +11,11 @@ Returns: nodes struct
 %}
 function nodes = extractor_nodes(train_data)
 	
-	fprintf("Generating nodes...");
+	global PARAMS;
+	
+	if (PARAMS.db_display)
+		fprintf("Generating nodes...");
+	end
 	
 	% Generate a pair of standard nodes, one for each class
 	null_n = size(train_data.null_data, 1);
@@ -33,7 +37,9 @@ function nodes = extractor_nodes(train_data)
 	% The returned node is initialized with the calculated weight values
 	nodes.weights = weights;
 	
-	fprintf("Nodes generated.\n");
+	if (PARAMS.db_display)
+		fprintf("Nodes generated.\n");
+	end
 	
 end
 

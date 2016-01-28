@@ -51,8 +51,10 @@ function tile_indices = extractor_tindex(mask_length)
 	tiles = 1 .+ full_steps;
 	
 	row_length = feature_dim(2);
-
-	disp("Calculating tile bounds...");
+	
+	if (PARAMS.db_display)
+		disp("Calculating tile bounds...");
+	end
 	
 	% Iterate through all tile positions
 	for i=0:(tiles(1) - 1)
@@ -101,6 +103,8 @@ function tile_indices = extractor_tindex(mask_length)
 			
 	end
 	
-	disp("Tile bounds generated.");
+	if (PARAMS.db_display)
+		disp("Tile bounds generated.");
+	end
 	
 end

@@ -1,9 +1,51 @@
-# Created by kotulc
-# name: dataFile
+% extractor_params.m
+% Clayton Kotulak
+% 1/18/2016
+
+
+%{ 
+The name of the saved feature map data file. If this file does not exist it 
+will be created.
+
+A string that forms a valid file name
+See extractor_main
+%}
+# name: fmap_data_file
 # type: string
 # elements: 1
-# length: 13
-trainData.mat
+# length: 11
+fmap_data.m
+
+
+%{ 
+The name of the file used to store the solution data. If this file does not 
+exist it will be created. If this file already exists, the user will be 
+prompted to confirm the overwrite of its contents.
+
+A string that forms a valid file name
+See extractor_main
+%}
+# name: solution_data_file
+# type: string
+# elements: 1
+# length: 15
+solution_data.m
+
+
+%{ 
+The name of the file used to store the feature data produced by filtering the
+original data through the solution layer. If this file does not exist it will
+be created. If this file already exists, the user will be prompted to confirm 
+the overwrite of its contents.
+
+A string that forms a valid file name
+See extractor_main
+%}
+# name: feature_data_file
+# type: string
+# elements: 1
+# length: 14
+feature_data.m
 
 
 %{ 
@@ -15,19 +57,6 @@ See extractor_main
 # name: target_label
 # type: scalar
 0
-
-
-%{ 
-The number of sample passes to attempt and local solutions generated. Each 
-sample operation returns it's extracted feature maps which are pooled in the
-fmap_collection and passed to the next sample operation.
-
-An integer value in the range [1,inf)
-See extractor_main 
-%}
-# name: solution_n
-# type: scalar
-2
 
 
 %{ 
@@ -50,7 +79,7 @@ The maximum number of convolutional feature maps utilized for generating the
 layer encoding (solution). Up to max_fmaps will be generated per sample pass.
 
 An integer value in the range [1,inf)
-See extractor_sample
+See extractor_encode
 %}
 # name: max_fmaps
 # type: scalar
@@ -58,12 +87,24 @@ See extractor_sample
 
 
 %{ 
-The size of the random subset of the sample_n target and null instances used
-to extract and evaluate candidate features per selected template (template_n). 
-This value indicates the number of instances included from *EACH* class.
+The number of candidate features extracted and converted to feature maps for 
+each label class. 
 
 An integer value in the range [1,sample_n]
-See extractor_sample
+See extractor_solve
+%}
+# name: feature_n
+# type: scalar
+6
+
+
+%{ 
+The size of the random subset of the sample_n target and null instances used
+to extract and evaluate candidate features per template selection (template_n). 
+This value indicates the number of instances included from *EACH* class.
+ 
+An integer value in the range [1,sample_n]
+See extractor_solve
 %}
 # name: subset_n
 # type: scalar
@@ -81,7 +122,7 @@ See extractor_extract
 %}
 # name: eval_n
 # type: scalar
-50
+30
 
 
 %{ 
@@ -97,7 +138,7 @@ See extractor_extract
 %}
 # name: template_n
 # type: scalar
-20
+5
 
 
 %{ 
@@ -157,18 +198,6 @@ See extractor_tindex
 
 
 %{ 
-The minimum (squared) instance activation sum that needs to be reached before 
-a new opposing classification component can be generated.
-
-A float value in the range [0,inf)
-See extractor_extract
-%}
-# name: actv_threshold
-# type: scalar
-0.25
-
-
-%{ 
 The term used to scale the influence of the ratio value. This term 
 effectively stretches the sigmoid function when rscale_term approaches
 zero and compacts it as it approaches infinity. 
@@ -213,4 +242,4 @@ See extractor_encode, extractor_nodes
 %}
 # name: db_display
 # type: scalar
-1
+0
