@@ -25,6 +25,7 @@ function fmap_collection = extractor_load(file_name)
 	fmap_data_flag = exist(file_name)==2;
 	if (fmap_data_flag)
 		disp("Loading feature data...");
+		fflush(stdout);
 		
 		fmap_data = load(file_name);
 		fmap_collection.null_fmaps = fmap_data.null_fmaps;
@@ -43,6 +44,7 @@ function fmap_collection = extractor_load(file_name)
 					fmap_collection.target_fitness target_fmap.fitness];
 		end
 		disp("Feature data loaded.\n");
+		fflush(stdout);
 	end
 	
 end

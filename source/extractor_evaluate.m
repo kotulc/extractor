@@ -25,7 +25,11 @@ function [error_data actv_data] = extractor_evaluate(solution, sample_data)
 	layer_data.target_mask = ones(size(target_actvs,1),1) ./...
 			sum(size(target_actvs,1));
 	
-
+	% Save and return the activations for the encoded layer
+	actv_data.null_actvs = null_actvs;
+	actv_data.target_actvs = target_actvs;
+	
+	
 	disp("\nEvaluating layer performance...");
 	% Train a node on the original training data
 	input_node = extractor_nodes(sample_data);
@@ -56,10 +60,6 @@ function [error_data actv_data] = extractor_evaluate(solution, sample_data)
 	
 	error_data.null_layer = null_actvs;
 	error_data.target_layer = 1 .- target_actvs;
-	
-	% Return the activations for the encoded layer
-	actv_data.null_actvs = null_actvs;
-	actv_data.target_actvs = target_actvs;
 	
 	% Display layer error information
 	null_layer_esum = sum(error_data.null_layer)

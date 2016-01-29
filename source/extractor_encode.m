@@ -38,7 +38,7 @@ function solution = extractor_encode(fmap_collection, sample_data)
 		% space if possible. target instances may be removed from the problem 
 		% if the sum of their squared activation values is greater or less then
 		% all null instances (i.e. they are separable). Same for null pruning
-		disp("Encoding layer:");
+		fprintf("\n\nEncoding layer:");
 		[error_data actv_data] = extractor_evaluate(solution, sample_data);
 		
 		% Create masks to prune null and target instances designated as solved

@@ -60,12 +60,12 @@ See extractor_main
 
 
 %{ 
-The number of training instances randomly selected from *EACH* class for each 
-sample operation. The set of sample instances is constructed with equal parts
+The number of training instances randomly selected from *EACH* class for 
+feature extraction. The set of sample instances is constructed with equal parts
 from each class and therefore the number of sample instances is sample_n*2.
 The remaining set of training instances will be used for validation purposes.
 
-An integer value in the range [1,m*2) where m = number of training instances 
+An integer value in the range [1,m) where m = number of training instances 
 of the label class with the least number of instances
 See extractor_main
 %}
@@ -88,9 +88,9 @@ See extractor_encode
 
 %{ 
 The number of candidate features extracted and converted to feature maps for 
-each label class. 
+the target and null classes. 
 
-An integer value in the range [1,sample_n]
+An integer value in the range [1,inf)
 See extractor_solve
 %}
 # name: feature_n
@@ -126,12 +126,8 @@ See extractor_extract
 
 
 %{ 
-The number of candidate feature templates extracted, evaluated and reduced. 
-The templates are used to generate each feature map. A total of 
-template_n*m candidate templates are processed in each extract operation,
-where m is the number of tiles per feature map. This should be much lower then
-subset_n. Note: The total number of templates processed is 
-solution_n*max_fmaps*template_n*m
+The number of candidate feature templates extracted, evaluated and reduced per
+feature map generated.
 
 An integer value in the range [1,subset_n]
 See extractor_extract

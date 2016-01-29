@@ -27,8 +27,11 @@ function [solution fmap_collection] = extractor_solve(...
 	% Update the fmap_collection if it contains features
 	if (numel(fmap_collection.null_fmaps)>0 ||...
 			numel(fmap_collection.target_fmaps)>0)
+		disp("Updating feature data...");
+		fflush(stdout);
 		[fmap_collection sample_data] = extractor_update(...
 				fmap_collection, sample_data);
+		disp("Feature data updated.\n");
     end
 	
 	% Generate feature_n fmaps used to generate a solution (ANN layer)
