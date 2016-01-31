@@ -24,11 +24,18 @@ function nodes = extractor_nodes(train_data)
 	% Join the two data sets for training
 	x = [train_data.null_data; train_data.target_data];
 	y = [zeros(null_n,1); ones(target_n,1)];
-		
-	% Join the influence vectors to create the learning influence mask
-	alpha_null = train_data.null_mask ./ sum(train_data.null_mask);
-	alpha_target = train_data.target_mask ./ sum(train_data.target_mask);
-	alpha_mask = [alpha_null; alpha_target];
+	
+	% Join the influence vectors to create the learning influence mask	
+	if (isfield(train_data, "null_imask") &&...
+			isfield(train_data, "target_imask"))
+		alpha_null = train_data.null_mask ./ sum(train_data.null_mask);
+		alpha_target = train_data.target_mask ./ sum(train_data.target_mask);
+		alpha_mask = [alpha_null; alpha_target];
+	else
+		% If the data set does not contain a null and target mask, initialize 
+		alpha_mask = ones(size(x, 1), 1);
+		alpha_mask = 2 .* alpha_mask ./ sum(alpha_mask);
+	end
 
 	% Randomly initialize the weights 
 	weights = unifrnd(-1, 1, [size(x, 2)+1 1]);

@@ -27,6 +27,7 @@ function [fmap_collection sample_data] = extractor_update(...
 		
 		% Calculate the fmap activation and fitness values 
 		null_fmap = extractor_fitness(null_fmap, sample_data, 1);
+		keyboard();
 	
 		% Add the feature map components to fmap_collection
 		fmap_collection.null_fmaps = [...
@@ -47,6 +48,7 @@ function [fmap_collection sample_data] = extractor_update(...
 		sample_data.target_mask = sample_data.target_emask;
 		
 		target_fmap = extractor_fitness(target_fmap, sample_data, 1);
+		keyboard();
 	
 		fmap_collection.target_fmaps = [...
 		        fmap_collection.target_fmaps target_fmap];
@@ -69,6 +71,7 @@ function [fmap_collection sample_data] = extractor_update(...
 		
 		% Calculate the updated fmap activation and fitness values 
 		null_fmaps = extractor_fitness(fmap_collection.null_fmaps, sample_data, 1);
+		keyboard();
 		
 		% Update the collection
 		fmap_collection.null_fitness = null_fmaps.fitness;
@@ -82,6 +85,7 @@ function [fmap_collection sample_data] = extractor_update(...
 		sample_data.target_mask = sample_data.target_emask;
 		
 		target_fmaps = extractor_fitness(fmap_collection.target_fmaps, sample_data, 1);
+		keyboard();
 		
 		fmap_collection.target_fitness = target_fmaps.fitness;
 		fmap_collection.target_iactvsum = target_fmaps.null_actvsum;

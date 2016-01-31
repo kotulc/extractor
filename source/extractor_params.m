@@ -4,20 +4,6 @@
 
 
 %{ 
-The name of the saved feature map data file. If this file does not exist it 
-will be created.
-
-A string that forms a valid file name
-See extractor_main
-%}
-# name: fmap_data_file
-# type: string
-# elements: 1
-# length: 11
-fmap_data.m
-
-
-%{ 
 The name of the file used to store the solution data. If this file does not 
 exist it will be created. If this file already exists, the user will be 
 prompted to confirm the overwrite of its contents.
@@ -33,30 +19,57 @@ solution_data.m
 
 
 %{ 
-The name of the file used to store the feature data produced by filtering the
-original data through the solution layer. If this file does not exist it will
-be created. If this file already exists, the user will be prompted to confirm 
-the overwrite of its contents.
+The name of the file used to store the input data partitioned into training, 
+validation and test sets. If this file does not exist it will be created once
+the raw MNIST data has been partitioned. If this file exists, the system will 
+load input data from this file instead of the default MNIST data files.
 
 A string that forms a valid file name
-See extractor_main
+See extractor_load
 %}
-# name: feature_data_file
+# name: input_data_file
 # type: string
 # elements: 1
-# length: 14
-feature_data.m
+# length: 12
+input_data.m
+
+
+%{ 
+The name of the saved feature map data file. If this file does not exist it 
+will be created.
+
+A string that forms a valid file name
+See extractor_main, extractor_load
+%}
+# name: fmap_data_file
+# type: string
+# elements: 1
+# length: 11
+fmap_data.m
+
+
+%{ 
+The fraction of training instances to reserve for validation purposes. Note 
+that the number of null and target training instances must be equal thus the 
+size of the validation set is based on min([size(target_data) size(null_data)])
+
+An float value in the range (0,1)
+See extractor_load
+%}
+# name: validation_percent
+# type: scalar
+0.50
 
 
 %{ 
 The class label targeted for training against all other numeric classes.
 
 An integer value in the range [0,class_label_n-1]
-See extractor_main
+See extractor_load
 %}
 # name: target_label
 # type: scalar
-0
+8
 
 
 %{ 
@@ -238,4 +251,4 @@ See extractor_encode, extractor_nodes
 %}
 # name: db_display
 # type: scalar
-0
+1

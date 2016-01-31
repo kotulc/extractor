@@ -16,14 +16,10 @@ function [error_data actv_data] = extractor_evaluate(solution, sample_data)
 	% alpha_mask to its default state
 	null_actvs = extractor_fprop({solution}, sample_data.null_data).^2;
 	layer_data.null_data = null_actvs;
-	layer_data.null_mask = ones(size(null_actvs,1),1) ./...
-			sum(size(null_actvs,1));
 	
 	target_actvs = extractor_fprop(...
 			{solution}, sample_data.target_data).^2;
 	layer_data.target_data = target_actvs;
-	layer_data.target_mask = ones(size(target_actvs,1),1) ./...
-			sum(size(target_actvs,1));
 	
 	% Save and return the activations for the encoded layer
 	actv_data.null_actvs = null_actvs;
@@ -44,7 +40,7 @@ function [error_data actv_data] = extractor_evaluate(solution, sample_data)
 	target_actvs = extractor_fprop(...
 			{input_node.weights}, sample_data.target_data).^2;
 	
-	% Create a structure to encapsulate and the error data	
+	% Create a structure to encapsulate the error data	
 	error_data.null_input = null_actvs;
 	error_data.target_input =  1 .- target_actvs;
 	
