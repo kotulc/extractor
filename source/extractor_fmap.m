@@ -18,7 +18,7 @@ function weights = extractor_fmap(weight_template)
 	receptive_dim = PARAMS.receptive_dim;
 	weights = [];
 	
-	if (PARAMS.db_display)
+	if (0)
 		disp("\nGenerating feature map weights...");
 	end
 	
@@ -58,7 +58,7 @@ function weights = extractor_fmap(weight_template)
 	bias = bias .* ones(1,size(weights,2));
 	weights = [bias; weights];
 	
-	if (PARAMS.db_display)
+	if (0)
 		disp("Feature map weights generated.\n");
 	end
 	

@@ -15,92 +15,111 @@ function nodes_collection = extractor_fitness(...
 	
 	global PARAMS;
 	
-	% If the collection contains fmaps, nodes represents a fmap_collection, 
-	% process each fmap iteratively. Perform another sum operation for the null
-	% and target activation matrices
-	if (fmap==0)
-		% Passed object is not a feature map, adapt its structure 
-		nodes_collection(1) = nodes_collection;
+	if (PARAMS.db_display)
+		fprintf("\nCalculating fitness...\n");
+		fflush(stdout);
 	end
 	
 	% Collect information for db_display
 	fitness_vals = [];
 	ratio_vals = [];
-	null_actvals = [];
-	target_actvals = [];
-	null_actvsums = [];
-	target_actvsums = [];
-	node_weights = [];
+	inhibit_actvals = [];
+	excite_actvals = [];
+	inhibit_actvsums = [];
+	excite_actvsums = [];
+	
+	if (~fmap)
+		fmap_n = 1;
+	else
+		fmap_n = size(nodes_collection.weights, 2);
+	end
 	
 	% Each iteration processes one group of nodes or a feature map
-	for i=1:size(nodes_collection, 2)
-		% node_collection(i).weights contains a matrix of weights where each 
+	for i=1:fmap_n
+		% node_collection.weights contains a matrix of weights where each 
 		% column vector represents a node. Calculate the fitness for each node
-		node_weights = [node_weights nodes_collection(i).weights];
-		
-		null_actvs = extractor_fprop(...
-				{nodes_collection(i).weights}, sample_data.null_data).^2;
-		target_actvs = extractor_fprop(...
-				{nodes_collection(i).weights}, sample_data.target_data).^2;
-
-		% Calculate the target-to-null instance scaling value to account for
-		% sets of different sizes when calculating the activation ratio
-		actvsum_scale = size(sample_data.target_data, 1) / ...
-				size(sample_data.null_data, 1); 
-				
-		null_actvsum = sum(...
-				null_actvs .* sample_data.null_mask) .* actvsum_scale;
-		target_actvsum = sum(target_actvs .* sample_data.target_mask);
-		
 		if (fmap)
-			% An additional sum over each node in the feature map is required
-			null_actvsum = sum(null_actvsum);
-			target_actvsum = sum(target_actvsum);
+			inhibit_actvs = extractor_fprop(...
+				{nodes_collection.weights{i}}, sample_data.inhibit_data).^2;
+			excite_actvs = extractor_fprop(...
+				{nodes_collection.weights{i}}, sample_data.excite_data).^2;
+				
+			% If this is a feature map, combine node activation values
+			inhibit_actvs = sum(inhibit_actvs, 2);
+			excite_actvs = sum(excite_actvs, 2);
+		else
+			inhibit_actvs = extractor_fprop(...
+				{nodes_collection.weights}, sample_data.inhibit_data).^2;
+			excite_actvs = extractor_fprop(...
+				{nodes_collection.weights}, sample_data.excite_data).^2;
 		end
 		
-		null_actvals = [null_actvals; null_actvsum];
-		target_actvals = [target_actvals; target_actvsum];
+		% Calculate the excite-to-inhibit instance scaling value to account for
+		% sets of different sizes when calculating the activation ratio
+		actvsum_scale = size(sample_data.excite_data, 1) / ...
+				size(sample_data.inhibit_data, 1); 
+		
+		inhibit_actvsum = sum(inhibit_actvs) .* actvsum_scale;
+		excite_actvsum = sum(excite_actvs);
+		
+		inhibit_actvals = [inhibit_actvals; inhibit_actvsum];
+		excite_actvals = [excite_actvals; excite_actvsum];
 		
 		% Save the activation sum for each class 
-		null_actvsums = [null_actvsums sum(null_actvs, 2)];
-		target_actvsums = [target_actvsums sum(target_actvs, 2)];
+		if (fmap)
+			inhibit_actvsums = [inhibit_actvsums sum(inhibit_actvs, 2)];
+			excite_actvsums = [excite_actvsums sum(excite_actvs, 2)];
+		else
+			inhibit_actvsums = [inhibit_actvsums sum(inhibit_actvs)];
+			excite_actvsums = [excite_actvsums sum(excite_actvs)];
+		end
 		
-		ratio = target_actvsum ./ (null_actvsum .+ (null_actvsum==0));
+		ratio = excite_actvsum ./ (inhibit_actvsum .+ (inhibit_actvsum==0));
 		ratio_vals = [ratio_vals; ratio];
 
-		% r is the scaled, offset value used to compute a sigmoid function with a
-		% x-intercept at 1. The parameter rscale_term scales the ratio term, 
-		% effectively reducing the influence of the ratio term for values > 1 and
+		% r is the scaled, offset value used to compute a sigmoid function with 
+		% a x-intercept at 1. The parameter rscale_term scales the ratio term, 
+		% effectively reducing the influence of the ratio term for values > 1 
 		% and increasing it's influence for values < 1. rscale_term must be > 0.
 		r = (ratio .- 1) .* PARAMS.rscale_term;
 		r_sigmoid = r ./ (1 .+ abs(r));
 		
-		% The fitness metric is the product of the parametrized ratio and log of
-		% the sum of a nodes excitatory activation
-		fitness = r_sigmoid .* log(null_actvsum .+ 1);
-		fitness_vals = [fitness_vals fitness];
+		excite_norm = sum(excite_actvs .* sample_data.excite_mask) ./...
+				sum(sample_data.excite_mask);
+		e_term = PARAMS.escale_term .+ log(1 .+ excite_norm);
+		
+		fitness = r_sigmoid .* e_term;
+		fitness_vals = [fitness_vals fitness]; 
 	end
 	
-	% Rebuild the nodes_collection structure with the gathered data
-	nodes_collection = [];
-	nodes_collection.weights = node_weights;
+	% Update the nodes_collection structure with the gathered data
 	nodes_collection.fitness = fitness_vals;
-	nodes_collection.null_actvsum = null_actvsums;
-	nodes_collection.target_actvsum = target_actvsums;
-	
+	nodes_collection.inhibit_actvsum = inhibit_actvsums;
+	nodes_collection.excite_actvsum = excite_actvsums;
+	nodes_collection.ratios = ratio_vals;
+
 	
 	% Display debug output
 	if (PARAMS.db_display)
-        instance_n = size(sample_data.null_data, 1) +...
-                size(sample_data.target_data, 1);
-		fprintf("\nFitness values (%i total instances):\n", instance_n);
-        fprintf("n_asum        t_asum          ratio        fitness\n");
+		min_val = min(nodes_collection.fitness);
+		max_val = max(nodes_collection.fitness);
+		mean_val = mean(nodes_collection.fitness);
+		fprintf("Fitness min: %4d, max: %4d, mean %4d\n",...
+				min_val, max_val, mean_val);
+				
+        instance_n = size(sample_data.inhibit_data, 1) +...
+                size(sample_data.excite_data, 1);
+		fprintf("\nFitness values (%i nodes, %i total instances):\n",...
+				numel(fitness_vals), instance_n);
+		
+        fprintf("i_asum        e_asum          ratio        fitness\n");
         
-		for i=1:numel(fitness_vals)
-			fprintf("%12.4f %12.4f %12.4f %12.4f\n", null_actvals(i),
-					target_actvals(i), ratio_vals(i), fitness_vals(i));
+		display_n = min([PARAMS.db_fitness numel(fitness_vals)]);
+		for i=1:display_n
+			fprintf("%12.4f %12.4f %12.4f %12.6f\n", inhibit_actvals(i),
+					excite_actvals(i), ratio_vals(i), fitness_vals(i));
 		end
-		fprintf("\n\n");
+		fprintf("\nFitness calculated.\n\n");
 		fflush(stdout);
 	end
 	

@@ -1,7 +1,7 @@
 # extractor
 An Octave based feature extractor and encoder
 
-Version 1.1 (as of 1-27-16 commit)
+Version 1.2 (3-21-16)
 
 The Extractor project has been developed as a platform for exploration of supervised feature extraction as it relates to Artificial Neural Networks. The primary goal of this project is to extract useful features from a subset of the training data and then encode these feature into a Convolutional Neural Network layer. 
 
@@ -12,6 +12,12 @@ This project has been designed iteratively based on my current understanding of 
 For more detail concerning this project, please take a look at the documentation located in this repository.
 
 
+3-21-16: Update to v1.2
+Following the previous update, major restructuring was still required in order to improve performance and computational efficiency. This update has been long overdue.
+
+The extraction and encode operations have been seperated. File handling, extraction and encoding have been simplified. Solution performance appears to have improved greatly. 
+
+
 1-27-16: Update to v1.1
 With this update the entire flow of the project has been refined to reduce unnecessary operations and improve encoding performance. Also, features are now generated for both the target and null classes.
 
@@ -19,11 +25,8 @@ The project now generates a single solution and aggregates the generated feature
 
 
 Pending updates: 
-- Update documentation to reflect v1.1
-- Continue to improve encoding function performance
-- Continue to simplify project structure e.g. limit reduction to one or two operations, generate nodes in reduction step instead of template extraction step
+- Update documentation to reflect v1.2
+- Refine save functionality as required by evalnets 
+- Add unit test function to the repository and refine
 - Check all functions for consistency (style and comments)
 
-Note: version 1.1 performance needs to be evaluated and further simplification may be necessary.
-
-version 1.0 is under performing when compared to previous versions, (before initial project commit) though previous iterations were much slower as they evaluated feature bias through node generation. v1.1 changes will hopefully eliminate unnecessary complexity and improve the performance of the encoded layer.

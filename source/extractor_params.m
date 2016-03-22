@@ -14,8 +14,8 @@ See extractor_main
 # name: solution_data_file
 # type: string
 # elements: 1
-# length: 15
-solution_data.m
+# length: 17
+solution_data.dat
 
 
 %{ 
@@ -30,8 +30,8 @@ See extractor_load
 # name: input_data_file
 # type: string
 # elements: 1
-# length: 12
-input_data.m
+# length: 14
+input_data.dat
 
 
 %{ 
@@ -41,17 +41,17 @@ will be created.
 A string that forms a valid file name
 See extractor_main, extractor_load
 %}
-# name: fmap_data_file
+# name: feature_data_file
 # type: string
 # elements: 1
-# length: 11
-fmap_data.m
+# length: 16
+feature_data.dat
 
 
 %{ 
 The fraction of training instances to reserve for validation purposes. Note 
-that the number of null and target training instances must be equal thus the 
-size of the validation set is based on min([size(target_data) size(null_data)])
+that the number of null and target training instances must be equal, thus the 
+size of the validation set is based on min([size(excite_data) size(inhibit_data)])
 
 An float value in the range (0,1)
 See extractor_load
@@ -75,86 +75,144 @@ See extractor_load
 %{ 
 The number of training instances randomly selected from *EACH* class for 
 feature extraction. The set of sample instances is constructed with equal parts
-from each class and therefore the number of sample instances is sample_n*2.
-The remaining set of training instances will be used for validation purposes.
+from each class and therefore the total number of sample instances is 
+sample_n*2. The remaining set of training instances will be used for validation.
 
-An integer value in the range [1,m) where m = number of training instances 
-of the label class with the least number of instances
+An integer value in the range [1,m) 
 See extractor_main
 %}
 # name: sample_n
 # type: scalar
-2000
+1000
 
 
 %{ 
-The maximum number of convolutional feature maps utilized for generating the
-layer encoding (solution). Up to max_fmaps will be generated per sample pass.
+The maximum number of convolutional feature maps utilized for generating the 
+layer encoding (solution).
 
 An integer value in the range [1,inf)
 See extractor_encode
 %}
-# name: max_fmaps
+# name: max_fmaps 
 # type: scalar
 6
 
 
 %{ 
 The number of candidate features extracted and converted to feature maps for 
-the target and null classes. 
+both the inhibitory and excitatory classes.  feature_n*2 features extracted.
 
 An integer value in the range [1,inf)
-See extractor_solve
+See extractor_extract
 %}
 # name: feature_n
 # type: scalar
-6
+3
 
 
 %{ 
-The size of the random subset of the sample_n target and null instances used
-to extract and evaluate candidate features per template selection (template_n). 
-This value indicates the number of instances included from *EACH* class.
- 
-An integer value in the range [1,sample_n]
-See extractor_solve
+Enable optional reduction step for each feature extraction operation.
+
+A binary value where 0 indicates reduce is disabled 
+See extractor_feature
 %}
-# name: subset_n
+# name: reduce
 # type: scalar
-200
+0
 
 
 %{ 
-The number of instances randomly selected from the set of 
-extraction instances (subset_n instances) for each template extraction 
-operation. Selected instances are decomposed into tiles and used to extract and
-evaluate the fitness of a set of template tiles.
+The number of inhibitory instances (subset_n instances) randomly selected to 
+train template nodes. Selected instances are decomposed into tiles and used to 
+extract and evaluate the fitness of a set of template tiles.
 
 An integer value in the range [1,subset_n]
-See extractor_extract
+See extractor_feature
 %}
-# name: eval_n
+# name: node_eval_n
 # type: scalar
 30
 
 
 %{ 
-The number of candidate feature templates extracted, evaluated and reduced per
-feature map generated.
+The number of nodes generated per weight optimization batch operation
+
+An integer value in the range [0,inf)
+See extractor_feature, extractor_reduce
+%}
+# name: node_batch_size
+# type: scalar
+100
+
+
+%{ 
+The number of instances randomly selected from the set of extraction instances 
+(subset_n instances) for each template extraction operation. Selected instances
+are decomposed into tiles and used to evaluate the fitness of a set of template
+tiles.
 
 An integer value in the range [1,subset_n]
-See extractor_extract
+See extractor_template
+%}
+# name: template_eval_n
+# type: scalar
+80
+
+
+%{ 
+The number of candidate feature template instances decomposed into template
+tiles and used to generate each feature node (template_tiles nodes)
+
+An integer value in the range [1,subset_n]
+See extractor_template
 %}
 # name: template_n
 # type: scalar
-5
+30
+
+
+%{ 
+The number of extracted template tiles (may be less).
+
+A float value in the range (0,inf)
+See extractor_template
+%}
+# name: template_tiles
+# type: scalar
+200
+
+
+%{ 
+The term used to scale the influence of the ratio value. This term 
+effectively stretches the sigmoid function when rscale_term approaches
+zero and compacts it as it approaches infinity. 
+
+A float value in the range (0,inf)
+See extractor_fitness
+%}
+# name: rscale_term
+# type: scalar
+1.00
+
+
+%{ 
+The value used to scale the influence of the excitatory activation term 
+(e_term). The influence of e_term increases as escale_term approaches 0.
+e_term = escale_term + log(1 + excitatory_actv_sum) 
+
+A float value in the range (0,inf)
+See extractor_fitness
+%}
+# name: escale_term
+# type: scalar
+0.075
 
 
 %{ 
 The original dimensions of the features for each training instance.
 
 A 2-element vector with the pattern: [row_n, col_n]
-See extractor_main
+See extractor_tindex
 %}
 # name: feature_dim
 # type: matrix
@@ -167,7 +225,7 @@ See extractor_main
 The feature map receptive field dimensions.
 
 A 2-element vector with the pattern: [row_n, col_n]
-See extractor_main
+See extractor_tindex
 %}
 # name: receptive_dim
 # type: matrix
@@ -207,19 +265,6 @@ See extractor_tindex
 
 
 %{ 
-The term used to scale the influence of the ratio value. This term 
-effectively stretches the sigmoid function when rscale_term approaches
-zero and compacts it as it approaches infinity. 
-
-A float value in the range (0,inf)
-See extractor_fitness
-%}
-# name: rscale_term
-# type: scalar
-1.0
-
-
-%{ 
 The weight regularization constant. 
 
 An integer value in the range [0,inf)
@@ -252,3 +297,15 @@ See extractor_encode, extractor_nodes
 # name: db_display
 # type: scalar
 1
+
+
+%{ 
+The maximum number of node fitness value to display if debug output is enabled.
+
+An integer value in the range [1,inf)
+See extractor_fitness, extractor_feature
+%}
+# name: db_fitness
+# type: scalar
+20
+
